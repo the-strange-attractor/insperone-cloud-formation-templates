@@ -24,10 +24,6 @@ Parameters:
     Type: String
   FunctionGithubOauthTokenSecret:
     Type: String
-  BackendServiceBaseURL:
-    Type: String
-  BackendServiceApiKeySecretArn:
-    Type: String
 
 Resources:
   # CodeBuild

@@ -7,7 +7,7 @@ Parameters:
     Type: String
     MinLength: 3
     MaxLength: 16
-    Default: my-func-proj
+    Default: insperone-project
     ConstraintDescription: must be between 3 and 10 characters.
   Environment:
     Description: An environment name that will be added to resource names
@@ -23,22 +23,22 @@ Parameters:
     Type: String
     MinLength: 3
     MaxLength: 16
-    Default: myFunc
+    Default: insperone-base-func
     ConstraintDescription: must be between 3 and 10 characters.
   Repository:
     Description: The name of the repository where source changes are to be detected.
     Type: String
-    Default: python-lambda-template
+    Default: insperone-python-lambda-template
   Branch:
     Description: The branch of the Github repository
     Type: String
     Default: master
-  CfnTemplateS3BucketName:
+  TemplateS3BucketName:
     Description: The bucket name at which the templates (like these) reside
     Type: String
   GitHubOwner:
     Type: String
-    Default: vahdet
+    Default: --
     Description: The name of the GitHub user or organization who owns the GitHub repository.
   GitHubOAuthToken:
     Type: String
@@ -46,12 +46,7 @@ Parameters:
     MinLength: 40
     MaxLength: 40
     AllowedPattern: "[a-z0-9]*"
-  BackendServiceBaseURL:
-    Description: The base URL for the backed service of the function
-    Type: String
-    AllowedPattern: "^(https?|ftp|file)://[-a-zA-Z0-9+&@#/%?=~_|!:,.;]*[-a-zA-Z0-9+&@#/%=~_|]"
-    ConstraintDescription: must be a valid URL.
-  BackendServiceApiKey:
+  GoogleApiKey:
     Type: String
     NoEcho: true
     MinLength: 10
@@ -72,12 +67,12 @@ Resources:
           Value: !Ref Environment
         - Key: Application
           Value: !Ref Project
-  BackendServiceApiKeySecret:
+  GoogleApiKeySecret:
     Type: AWS::SecretsManager::Secret
     Properties:
       Name: !Sub '/${Environment}/BackendServiceApiKeySecret'
-      Description: This is the API Key for the backend service to be called by the function
-      SecretString: !Sub '{"key":"${BackendServiceApiKey}"}'
+      Description: This is the API Key for Google used by Insperone
+      SecretString: !Sub '{"key":"${GoogleApiKey}"}'
       Tags:
         - Key: Environment
           Value: !Ref Environment
@@ -88,14 +83,14 @@ Resources:
   IAM:
     Type: AWS::CloudFormation::Stack
     Properties:
-      TemplateURL: !Sub https://${CfnTemplateS3BucketName}.s3.${AWS::Region}.amazonaws.com/iam.yaml
+      TemplateURL: !Sub https://${TemplateS3BucketName}.s3.${AWS::Region}.amazonaws.com/iam.yaml
       Parameters:
         Project: !Ref Project
         Environment: !Ref Environment
   Storage:
     Type: AWS::CloudFormation::Stack
     Properties:
-      TemplateURL: !Sub https://${CfnTemplateS3BucketName}.s3.${AWS::Region}.amazonaws.com/storage.yaml
+      TemplateURL: !Sub https://${TemplateS3BucketName}.s3.${AWS::Region}.amazonaws.com/storage.yaml
       Parameters:
         Project: !Ref Project
         Environment: !Ref Environment
@@ -103,7 +98,7 @@ Resources:
   Pipeline:
     Type: AWS::CloudFormation::Stack
     Properties:
-      TemplateURL: !Sub https://${CfnTemplateS3BucketName}.s3.${AWS::Region}.amazonaws.com/pipeline.yaml
+      TemplateURL: !Sub https://${TemplateS3BucketName}.s3.${AWS::Region}.amazonaws.com/pipeline.yaml
       Parameters:
         Project: !Ref Project
         Environment: !Ref Environment
@@ -121,5 +116,3 @@ Resources:
         # Lambda-specific
         FunctionName: !Sub ${Environment}-${FunctionName}
         Repository: !Ref Repository
-        BackendServiceBaseURL: !Ref BackendServiceBaseURL
-        BackendServiceApiKeySecretArn: !Ref BackendServiceApiKeySecret
